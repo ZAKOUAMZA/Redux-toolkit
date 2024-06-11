@@ -1,0 +1,133 @@
+/*Principales caractéristiques de Redux Tool Kit
+La fonction suivante est utilisée par Redux Took Kit, qui est un résumé de la fonction Redux existante. Ces fonctions ne modifient pas le flux de Redux mais les rationalisent uniquement de manière plus lisible et plus gérable.
+
+configureStore : crée une instance de magasin Redux comme le createStore d’origine de Redux, mais accepte un objet d’options nommé et configure automatiquement l’extension Redux DevTools.
+createAction : accepte une chaîne de type action et renvoie une fonction de création d’action qui utilise ce type.
+createReducer : accepte une valeur d’état initiale et une table de recherche des types d’action pour réduire les fonctions et crée un réducteur qui gère tous les types d’action.
+createSlice : accepte un état initial et une table de recherche avec des noms et des fonctions de réduction et génère automatiquement des fonctions de création d’action, des chaînes de type d’action et une fonction de réduction.
+Vous pouvez utiliser la fonction ci-dessus pour simplifier le code passe-partout dans Redux, en particulier à l’aide des méthodes createAction et createReduberger. Cependant, cela peut être simplifié en utilisant createSlice, qui génère automatiquement des fonctions de création et de réduction d’actions.
+
+Qu’est-ce que createSlice a de si spécial ?
+Il s’agit d’une fonction d’assistance qui génère une tranche de magasin. Il prend le nom de la tranche, l’état initial et la fonction de réduction pour renvoyer le réducteur, les types d’action et les créateurs d’actions.
+Tout d’abord, voyons à quoi ressemblent les réducteurs et les actions dans les applications traditionnelles de React-Redux.
+*/
+
+// Actions
+import {GET_USERS,CREATE_USER,DELETE_USER} from "../constant/constants";
+export const GetUsers = (data) => (dispatch) => {
+ dispatch({
+  type: GET_USERS,
+  payload: data,
+ });
+};
+
+export const CreateUser = (data) => (dispatch) => {
+ dispatch({
+  type: CREATE_USER,
+  payload: data,
+ });
+};
+
+export const DeleteUser = (data) => (dispatch) => {
+ dispatch({
+  type: DELETE_USER,
+  payload: data,
+ });
+};
+
+//Réducteurs
+
+import {GET_USERS,CREATE_USER,DELETE_USER} from "../constant/constants";
+const initialState = {
+ errorMessage: "",
+ loading: false,
+ users:[]
+};
+
+const UserReducer = (state = initialState, { payload }) => {
+switch (type) {
+ case GET_USERS:
+  return { ...state, users: payload, loading: false };
+case CREATE_USER:
+  return { ...state, users: [payload,...state.users],
+ loading: false };
+case DELETE_USER:
+  return { ...state, 
+  users: state.users.filter((user) => user.id !== payload.id),
+, loading: false };
+default:
+  return state;
+ }
+};
+
+export default UserReducer;
+
+/*Voyons maintenant comment nous pouvons simplifier et obtenir la même fonctionnalité en utilisant .createSlice*/
+
+import { createSlice } from '@reduxjs/toolkit';
+export const initialState = {
+  users: [],
+  loading: false,
+  error: false,
+};
+const userSlice = createSlice({
+  name: 'user',
+  initialState,
+  reducers: {
+    getUser: (state, action) => {
+      state.users = action.payload;
+      state.loading = true;
+      state.error = false;
+    },
+    createUser: (state, action) => {
+      state.users.unshift(action.payload);
+      state.loading = false;
+    },
+    deleteUser: (state, action) => {
+      state.users.filter((user) => user.id !== action.payload.id);
+      state.loading = false;
+    },
+  },
+});
+export const { createUser, deleteUser, getUser } = userSlice.actions;
+export default userSlice.reducer;
+
+/*Comme vous pouvez le voir maintenant, toutes les actions et les réducteurs se trouvent dans un endroit simple dans lequel une application redux traditionnelle vous devez gérer chaque action et son action correspondante à l’intérieur du réducteur. Lors de l’utilisation, vous n’avez pas besoin d’utiliser un commutateur pour identifier l’action.
+Lorsqu’il s’agit d’un état mutant, un flux Redux typique générera des erreurs et vous aurez besoin de tactiques JavaScript spéciales comme et pour les surmonter. Étant donné que la boîte à outils Redux utilise , vous n’avez pas à vous soucier de la mutation de l’état. Étant donné qu’une tranche crée les actions et les réducteurs, vous pouvez les exporter et les utiliser dans votre composant et dans Store pour configurer le Redux sans avoir de fichiers et de répertoires séparés pour les actions et les réducteurs, comme ci-dessous.createSlicespread operatorObject assignImmer*/
+
+import { configureStore } from "@reduxjs/toolkit";
+import userSlice from "./features/user/userSlice";
+export default configureStore({
+ reducer: {
+  user: userSlice,
+ },
+});
+
+
+
+
+// Redux thunk:
+Configurez redux-thunk dans votre projet.
+Si vous avez un projet sur lequel Redux est déjà configuré, l’ajout de redux-thunk se fera en deux étapes.
+Tout d’abord, installez le package.
+
+npm install --save redux-thunk
+Ensuite, où que vous ayez votre code de configuration Redux, vous devez importer redux-thunk et insérer son middleware dans Redux :
+
+// You've probably already imported createStore from 'redux'
+// You'll need to also import applyMiddleware
+import { createStore, applyMiddleware } from "redux";
+
+// Import the `thunk` middleware
+import thunk from "redux-thunk";
+
+// Import your existing root reducer here.
+// Change this path to fit your setup!
+import rootReducer from "./reducers/index";
+
+// The last argument to createStore is the "store enhancer".
+// Here we use applyMiddleware to create that based on
+// the thunk middleware.
+const store = createStore(rootReducer, applyMiddleware(thunk));
+Assurez-vous simplement d’envelopper thunk dans l’appel applyMiddleware, sinon cela ne fonctionnera pas.
+Après cela, vous êtes prêt : vous pouvez maintenant distribuer des fonctions qui font tout ce dont vous avez besoin.
